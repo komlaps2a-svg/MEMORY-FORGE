@@ -3,39 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Memory Forge - V41 Pinnacle</title>
+    <title>Memory Forge - V42 Absolute</title>
+    <!-- Tailwind & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- tsParticles Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Montserrat:wght@300;500;700;900&family=Dancing+Script:wght@700&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Montserrat:wght@300;500;700;900&family=Dancing+Script:wght@700&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
     <style>
         /* =========================================
-           CORE VARIABLES & GLASSMORPHISM
+           CORE ARCHITECTURE & THEMES
            ========================================= */
         :root {
-            /* Palette Legacy App */
+            /* Palette Legacy (Classic) */
             --legacy-bg: #f8f2e9; --legacy-primary: #8b5a2b; --legacy-secondary: #d4a373; 
-            --legacy-accent: #cb997e; --legacy-text: #5e503f; --legacy-paper: #fff9f5;
+            --legacy-accent: #cb997e; --legacy-text: #5e503f;
             
             /* Glass Palette */
             --glass-bg: rgba(20, 20, 25, 0.75); --glass-blur: blur(25px);
             --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --envelope-color: #e6a4b4; --envelope-dark: #d88c9a; --envelope-light: #f3d7d7;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Montserrat', sans-serif; background: #050505; color: white; overflow: hidden; height: 100dvh; width: 100vw; overscroll-behavior: none; }
         ::-webkit-scrollbar { display: none; }
 
         /* =========================================
-           ZERO-BUG IN-PLACE ZOOM & PARTICLES
+           ZERO-BUG IN-PLACE ZOOM & INTERACTION
            ========================================= */
         .zoom-safe { transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s ease; cursor: pointer; position: relative; z-index: 10; }
-        .zoom-safe.is-zoomed { transform: scale(1.2) !important; z-index: 500 !important; box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important; }
+        /* The Zoom specific scale - In-place safely */
+        .zoom-safe.is-zoomed { transform: scale(1.15) !important; z-index: 500 !important; box-shadow: 0 30px 60px rgba(0,0,0,0.6) !important; }
         
         .interact-text { transition: transform 0.2s var(--ease-bounce); cursor: pointer; display: inline-block; }
         .interact-text:active { transform: scale(1.1); }
 
-        .touch-particle { position: fixed; pointer-events: none; z-index: 99999; animation: popParticle 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); font-size: 2rem; }
-        @keyframes popParticle { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5) rotate(var(--rot)); opacity: 0; } }
+        /* Interactive Particle Layer */
+        #interactive-particles { position: fixed; inset: 0; z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
+        #interactive-particles.active { opacity: 1; pointer-events: auto; }
+        
+        /* Global Dimmer for Zoom */
+        #zoom-dimmer { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        #zoom-dimmer.active { opacity: 1; pointer-events: auto; }
+
+        /* =========================================
+           FRAME VARIATIONS
+           ========================================= */
+        .frame-polaroid { background: #fff; padding: 12px 12px 45px 12px; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .frame-film { background: #111; padding: 0 15px; border-left: 10px dashed #333; border-right: 10px dashed #333; border-top: 4px solid #111; border-bottom: 4px solid #111; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        .frame-glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 4px solid rgba(255,255,255,0.8); border-radius: 16px; padding: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+        .frame-minimal { background: transparent; border: none; padding: 0; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); overflow: hidden; }
 
         /* =========================================
            SETUP SCREEN (Apple Dark Glass)
@@ -69,9 +87,9 @@
         .btn-del { position: absolute; top: 0; right: 0; background: rgba(239,68,68,0.9); color: white; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border-bottom-left-radius: 8px; z-index: 5; }
 
         /* =========================================
-           ENVELOPE SCREEN (Preserved & Enhanced)
+           ENVELOPE SCREEN
            ========================================= */
-        #envelopeScreen { display: none; justify-content: center; align-items: center; height: 100dvh; width: 100vw; flex-direction: column; background: linear-gradient(135deg, #fff5f5, #ffecec); position: fixed; top: 0; left: 0; z-index: 2000; overflow: hidden; opacity: 0; transition: opacity 0.8s ease; }
+        #envelopeScreen { display: none; justify-content: center; align-items: center; height: 100dvh; width: 100vw; flex-direction: column; background: linear-gradient(135deg, #fff5f5, #ffecec); position: fixed; top: 0; left: 0; z-index: 2000; opacity: 0; transition: opacity 0.8s ease; }
         .envelope-container { perspective: 1000px; position: relative; width: 300px; height: 200px; margin-bottom: 30px; cursor: pointer; }
         .envelope { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: all 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         .envelope.open { transform: translateY(-50px); }
@@ -89,62 +107,58 @@
         .envelope.open .env-heart { opacity: 0; transform: rotate(45deg) scale(2); }
         @keyframes pulse { 0% { transform: rotate(45deg) scale(1); } 50% { transform: rotate(45deg) scale(1.1); } 100% { transform: rotate(45deg) scale(1); } }
 
-        .btn-open-env { padding: 14px 35px; background: var(--legacy-primary); color: white; border: none; border-radius: 30px; cursor: pointer; transition: all 0.3s ease; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 5px 15px rgba(139, 90, 43, 0.4); margin-top: 20px; }
+        .btn-open-env { padding: 14px 35px; background: var(--legacy-primary); color: white; border: none; border-radius: 30px; cursor: pointer; transition: all 0.3s ease; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 5px 15px rgba(139, 90, 43, 0.4); margin-top: 20px; z-index: 10; position: relative; }
         .btn-open-env:active { background: #7a4c24; transform: scale(0.95); }
 
         /* =========================================
-           TEMPLATES GENERATOR STYLES
+           DYNAMIC TEMPLATE STYLES
            ========================================= */
         #presentation-stage { display: none; position: fixed; inset: 0; z-index: 10; background: #050505; overflow: hidden; }
         
         .tpl-scroll { height: 100dvh; width: 100vw; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .page { min-height: 100dvh; width: 100vw; scroll-snap-align: start; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
         
-        /* --- 1. CLASSIC LEGACY (Exact Replica of User's App + AI) --- */
+        /* 1. CLASSIC LEGACY (Exact Replica + AI Injection) */
         .tpl-classic { background: var(--legacy-bg); color: var(--legacy-text); }
-        
         .legacy-header { background: linear-gradient(135deg, var(--legacy-primary), var(--legacy-secondary)); color: white; padding: 30px 20px; text-align: center; width: 100%; max-width: 600px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
         .legacy-photo { width: 220px; height: 220px; border-radius: 50%; overflow: hidden; border: 6px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.2); margin: 20px auto; background: white; }
         .legacy-photo img { width: 100%; height: 100%; object-fit: cover; }
         
         .memory-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 600px; width: 100%; margin: 20px auto; }
-        .memory-item { background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 8px 8px 15px 8px; position: relative; }
+        .memory-item { background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 8px 8px 15px 8px; }
         .memory-item img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; }
         
         .timeline { position: relative; max-width: 600px; width: 100%; margin: 20px auto; padding-left: 20px; border-left: 3px solid var(--legacy-accent); }
-        .timeline-item { position: relative; margin-bottom: 30px; width: 100%; }
+        .timeline-item { position: relative; margin-bottom: 40px; width: 100%; }
         .timeline-dot { position: absolute; left: -31px; top: 0; width: 20px; height: 20px; background: var(--legacy-primary); border-radius: 50%; border: 3px solid var(--legacy-bg); box-shadow: 0 0 0 3px var(--legacy-primary); }
-        .timeline-content { padding: 15px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .timeline-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
+        .timeline-content { padding: 20px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 4px solid var(--legacy-primary); }
+        .timeline-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-top: 15px; }
 
-        /* --- 2. STORYBOOK --- */
+        /* 2. STORYBOOK */
         .tpl-storybook .page:nth-child(odd) { background: linear-gradient(135deg, #1a0812, #000); }
         .tpl-storybook .page:nth-child(even) { background: linear-gradient(135deg, #120d08, #000); }
-        .sb-frame { background: white; padding: 12px 12px 45px 12px; border-radius: 4px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
-        .sb-img { width: 70vw; max-width: 320px; height: 45dvh; object-fit: cover; background: #111; }
+        .sb-img { width: 70vw; max-width: 320px; height: 45dvh; object-fit: cover; }
 
-        /* --- 3. INFINITE WALL --- */
-        .tpl-wall { position: absolute; inset: 0; perspective: 1000px; overflow: hidden; background: radial-gradient(circle at center, #1a0812 0%, #000 100%); }
-        .wall-matrix { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; transform-style: preserve-3d; transition: transform 0.8s var(--ease-bounce); }
-        .wall-polaroid { position: absolute; background: #fff; padding: 10px 10px 40px 10px; border-radius: 4px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); }
-        .wall-polaroid img { width: 45vw; max-width: 250px; height: 30dvh; object-fit: cover; }
-        .dpad { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px; gap: 8px; z-index: 100; }
-        .dpad-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
-        .dpad-btn:active { transform: scale(0.8); background: rgba(255,255,255,0.3); }
+        /* 3. INFINITE WALL (NATIVE SWIPE PAN) */
+        .tpl-wall { position: absolute; inset: 0; background: radial-gradient(circle at center, #1a0812 0%, #000 100%); touch-action: none; cursor: grab; }
+        .tpl-wall:active { cursor: grabbing; }
+        .wall-matrix { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; transform-style: preserve-3d; will-change: transform; }
+        .wall-matrix.smooth-pan { transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .wall-item img { width: 45vw; max-width: 250px; height: 30dvh; object-fit: cover; border-radius: 2px; }
 
-        /* --- 4. GRID PUZZLE --- */
+        /* 4. GRID PUZZLE */
         .tpl-grid { height: 100dvh; width: 100vw; overflow-y: auto; padding: 80px 15px 20px 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; align-content: start; background: #0a0a0a; }
-        .grid-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 12px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .grid-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 16px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .grid-item img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
         /* =========================================
-           AI TYPOGRAPHY (CAPCUT STYLE)
+           CAPCUT TYPOGRAPHY ENGINE
            ========================================= */
-        .typo-capcut { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; width: 100%; max-width: 600px; margin: 15px auto; text-align: center; }
-        .t-huge { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 3.5rem); font-weight: 900; line-height: 1.1; }
-        .t-outline { font-family: 'Montserrat', sans-serif; font-size: clamp(1.5rem, 5vw, 2.5rem); text-transform: uppercase; font-weight: 900; color: transparent; -webkit-text-stroke: 1.5px currentColor; }
-        .t-script { font-family: 'Dancing Script', cursive; font-size: clamp(2rem, 8vw, 3.5rem); transform: rotate(-5deg); display: inline-block; }
-        .t-tape { background: var(--legacy-text); color: white; padding: 4px 12px; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(1rem, 3vw, 1.5rem); text-transform: uppercase; transform: skewX(-12deg); box-shadow: 4px 4px 10px rgba(0,0,0,0.2); display: inline-block; }
+        .capcut-typo { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; width: 100%; max-width: 600px; margin: 15px auto; text-align: center; }
+        .t-huge { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 7vw, 3rem); font-weight: 900; line-height: 1.1; }
+        .t-outline { font-family: 'Montserrat', sans-serif; font-size: clamp(1.2rem, 4vw, 2rem); text-transform: uppercase; font-weight: 900; color: transparent; -webkit-text-stroke: 1px currentColor; }
+        .t-script { font-family: 'Dancing Script', cursive; font-size: clamp(2rem, 7vw, 3.5rem); transform: rotate(-5deg); display: inline-block; }
+        .t-tape { background: var(--text); color: white; padding: 4px 12px; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(0.9rem, 3vw, 1.2rem); text-transform: uppercase; transform: skewX(-12deg); box-shadow: 4px 4px 10px rgba(0,0,0,0.2); display: inline-block; }
         .t-tape span { display: inline-block; transform: skewX(12deg); }
 
         /* =========================================
@@ -158,12 +172,8 @@
 
         .btn-top-home { position: fixed; top: 20px; left: 20px; z-index: 500; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); width: 45px; height: 45px; border-radius: 50%; display: none; justify-content: center; align-items: center; color: white; transition: 0.2s; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .btn-top-home:active { transform: scale(0.9); }
-        .theme-light .btn-top-home { background: rgba(255,255,255,0.8); color: var(--legacy-primary); border: 1px solid rgba(139,90,43,0.2); }
+        .theme-light .btn-top-home { background: rgba(255,255,255,0.9); color: var(--legacy-primary); border: 1px solid rgba(139,90,43,0.2); box-shadow: 0 5px 15px rgba(139,90,43,0.2); }
 
-        .scroll-down-hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: var(--legacy-accent); opacity: 0.7; animation: bounce 2s infinite; z-index: 10; pointer-events: none; font-size: 2rem; }
-        @keyframes bounce { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 10px); } }
-
-        /* System Modal */
         #sys-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         #sys-modal.active { opacity: 1; pointer-events: auto; }
         .modal-box { transform: scale(0.9); transition: transform 0.3s var(--ease-bounce); }
@@ -182,7 +192,7 @@
         <h1 class="text-3xl font-black mb-1 font-['Cinzel'] tracking-tighter text-center drop-shadow-md">Memory Forge</h1>
         <p class="text-[10px] text-[#d4a373] font-black uppercase tracking-widest mb-6 text-center">Omniverse Pinnacle V41</p>
 
-        <!-- RESTORED: TEMPLATE SELECTOR -->
+        <!-- TEMPLATE SELECTOR -->
         <div class="custom-dropdown mb-4" id="tpl-dropdown">
             <label class="block text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-1 ml-1">Tata Letak (Template)</label>
             <div class="dropdown-trigger" onclick="UI.toggleDropdown(event, 'tpl-dropdown')">
@@ -192,26 +202,26 @@
             <div class="dropdown-menu">
                 <div class="dropdown-item" onclick="UI.selectTpl('classic', 'Classic Legacy (App Lama)')">Classic Legacy (Aplikasi Lama Anda)</div>
                 <div class="dropdown-item" onclick="UI.selectTpl('storybook', 'Storybook (Buku Gulir)')">Storybook (Buku Gulir Estetik)</div>
-                <div class="dropdown-item" onclick="UI.selectTpl('wall', 'Infinite Wall (D-Pad)')">Dinding Polaroid (Navigasi D-Pad)</div>
+                <div class="dropdown-item" onclick="UI.selectTpl('wall', 'Infinite Wall (Swipe/Geser)')">Dinding Polaroid (Geser Jari)</div>
                 <div class="dropdown-item" onclick="UI.selectTpl('grid', 'Grid Puzzle Estetik')">Grid Puzzle Kotak-Kotak</div>
             </div>
         </div>
 
-        <!-- RESTORED: AI MODE SELECTOR -->
+        <!-- AI MODE SELECTOR -->
         <div class="custom-dropdown mb-4" id="mode-dropdown">
             <label class="block text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-1 ml-1">Kecerdasan Buatan AI</label>
             <div class="dropdown-trigger" onclick="UI.toggleDropdown(event, 'mode-dropdown')">
-                <span id="mode-selected-text">Tulis Cerita (Kata Kunci)</span>
+                <span id="mode-selected-text">Cerita Emosional (Kata Kunci)</span>
                 <i class="ph-bold ph-caret-down text-gray-400"></i>
             </div>
             <div class="dropdown-menu">
-                <div class="dropdown-item" onclick="UI.selectMode('keyword', 'Tulis Cerita (Kata Kunci)')">Rangkai Cerita dari Kata Kunci</div>
+                <div class="dropdown-item" onclick="UI.selectMode('keyword', 'Cerita Emosional (Kata Kunci)')">Cerita Emosional (Kata Kunci)</div>
                 <div class="dropdown-item" onclick="UI.selectMode('lyrics', 'Ekstrak Lirik MP3')">Ekstrak Lirik Lagu (Butuh MP3)</div>
             </div>
         </div>
 
         <div id="keyword-container" class="mb-4 transition-opacity">
-            <input type="text" id="input-keyword" placeholder="Konteks: Cinta, Sahabat, Kenangan..." class="glass-input" />
+            <input type="text" id="input-keyword" placeholder="Msl: Cinta, Sahabat, Kenangan 2026..." class="glass-input" />
         </div>
 
         <!-- BULLETPROOF NATIVE FILE UPLOADS -->
@@ -241,7 +251,7 @@
         </div>
 
         <button id="btn-generate" class="btn-action">
-            <i class="ph-bold ph-magic-wand text-xl"></i> Rangkai Keajaiban
+            <i class="ph-bold ph-magic-wand text-xl"></i> Rangkai Aplikasi
         </button>
     </div>
 </div>
@@ -253,20 +263,24 @@
             <div class="envelope-flap"></div>
             <div class="envelope-front"></div>
             <div class="envelope-paper">
-                <span class="interact-text font-bold" onclick="Engine.spawnParticles(event, '❤️')">For You ❤️</span><br>
-                <span class="interact-text text-sm opacity-80 font-sans tracking-widest font-bold mt-2 text-[var(--legacy-accent)]" onclick="Engine.spawnParticles(event, '✨')">A Visual Memory</span>
+                <span class="interact-text font-bold" onclick="Engine.spawnTouchParticles(event, '❤️')">For You ❤️</span><br>
+                <span class="interact-text text-sm opacity-80 font-sans tracking-widest font-bold mt-2 text-[var(--legacy-accent)]" onclick="Engine.spawnTouchParticles(event, '✨')">A Visual Memory</span>
             </div>
             <div class="envelope-back"></div>
             <div class="env-heart"></div>
         </div>
     </div>
-    <button class="btn-action" style="width: auto; padding: 12px 30px; margin-top: 20px;" onclick="Engine.openEnvelope()">Buka Kenangan</button>
+    <button class="btn-action" style="width: auto; padding: 12px 30px; margin-top: 20px; z-index:10;" onclick="Engine.openEnvelope()">Buka Kenangan</button>
 </div>
 
 <!-- MAIN PRESENTATION STAGE -->
 <button class="btn-top-home" id="btn-home" onclick="Engine.goHome()"><i class="ph-bold ph-house text-2xl"></i></button>
-<div class="page-indicator" id="pageIndicator"></div>
 
+<div id="zoom-dimmer"></div>
+<!-- The Interactive Particle Canvas -->
+<div id="interactive-particles"></div>
+
+<div class="page-indicator" id="pageIndicator"></div>
 <div id="presentation-stage">
     <!-- Dynamic Template HTML goes here -->
 </div>
@@ -283,11 +297,12 @@
 
 <script>
 /**
- * ARCHITECT LEVEL 41: THE OMNIVERSE PINNACLE
+ * ARCHITECT LEVEL 42: THE OMNIVERSE PINNACLE
  * - Hardcoded API Key
  * - Audio Unlocker Hack (Double Gesture)
  * - Restored Template Selector (Classic, Storybook, Wall, Grid)
- * - Zero-Bug In-Place Zoom with Click Particles.
+ * - Zero-Bug In-Place Zoom with tsParticles Native Integration (Swipe to repulse).
+ * - Native Touch Panning for Infinite Wall.
  */
 
 // ==========================================
@@ -299,7 +314,7 @@ const GEMINI_API_KEY = "AIzaSyDwLqm4rroo01GvAaSMG1X0U7uYXQl5d_g";
 const State = {
     photos: [], audioFile: null, audioUrl: null, quotes: [], pagesCount: 0,
     textMode: 'keyword', template: 'classic', audioInstance: null, observer: null,
-    camX: 50, camY: 50
+    camX: 50, camY: 50, isDraggingWall: false
 };
 
 const $ = id => document.getElementById(id);
@@ -319,7 +334,7 @@ const UI = {
     setLoading: (isL) => { 
         const b=$('btn-generate'); 
         if(isL) { b.innerHTML=`<div class="loader-ring"></div>`; b.disabled=true; } 
-        else { b.innerHTML=`<i class="ph-bold ph-magic-wand text-xl"></i> Rangkai Keajaiban`; b.disabled=false; } 
+        else { b.innerHTML=`<i class="ph-bold ph-magic-wand text-xl"></i> Rangkai Aplikasi Lama`; b.disabled=false; } 
     },
     renderPhotoManager: () => {
         const grid = $('photo-grid'); $('photo-count').textContent = `${State.photos.length} Foto`;
@@ -350,7 +365,7 @@ $('input-audio').addEventListener('change', (e) => {
 const AI = {
     generate: async () => {
         const count = Math.max(State.photos.length, 1); 
-        const fallbackQuotes = Array.from({length: count}, (_, idx) => ({ text: `Memory Chapter ${idx+1}`, emoji: "✨" }));
+        const fallbackQuotes = Array.from({length: count}, (_, idx) => ({ text: `Memori Indah Ke-${idx+1}`, emoji: "✨" }));
 
         if(!GEMINI_API_KEY || GEMINI_API_KEY === "TARUH_API_KEY_GEMINI_ANDA_DISINI") {
             console.warn("API Key belum disetel. Menggunakan teks fallback.");
@@ -358,9 +373,10 @@ const AI = {
         }
 
         const kw = $('input-keyword').value || "Kenangan Estetik";
+        // Force STRICT poetic generation format
         const prompt = State.textMode === 'lyrics' 
-            ? `Dengarkan audio. Ekstrak lirik vokalnya. Buat TEPAT ${count} baris. Kembalikan HANYA array JSON: [{"text": "lirik max 6 kata", "emoji": "🦋"}]. Jangan pakai markdown.` 
-            : `Buat TEPAT ${count} kutipan puitis. Tema: "${kw}". Kembalikan HANYA array JSON: [{"text": "kutipan estetik max 6 kata", "emoji": "🥀"}]. Jangan pakai markdown.`;
+            ? `Dengarkan audio. Ekstrak lirik vokalnya pendek-pendek. Buat TEPAT ${count} baris puisi berdasarkan lirik. Kembalikan HANYA array JSON: [{"text": "penggalan puitis max 6 kata", "emoji": "🦋"}]. Jangan pakai markdown.` 
+            : `Buat TEPAT ${count} baris kutipan puitis yang sangat menyentuh. Tema: "${kw}". Kembalikan HANYA array JSON murni: [{"text": "kutipan estetik max 6 kata", "emoji": "❤️"}]. Jangan tambahkan teks markdown apapun.`;
 
         const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.8 } };
         if (State.audioFile && State.textMode === 'lyrics') { try { payload.contents[0].parts.push({ inlineData: { mimeType: State.audioFile.type || "audio/mp3", data: await AudioUtils.fileToBase64(State.audioFile) } }); } catch (e) {} }
@@ -392,6 +408,7 @@ const AI = {
 
 // --- MULTI-TEMPLATE BUILDERS ---
 const Builders = {
+    // Generate CapCut Asymmetric Typo
     formatTypo: (text, mainColor, outlineColor) => {
         const words = text.split(' ').filter(w=>w.trim());
         return words.map((w, i) => {
@@ -403,47 +420,51 @@ const Builders = {
             if(cls === 't-outline') style=`-webkit-text-stroke: 1.5px ${outlineColor}; color: transparent;`;
             if(cls === 't-script') style=`color: var(--legacy-accent);`;
 
-            // Interactive Text Spans
             const tapeBg = mainColor === 'white' ? 'white' : 'var(--legacy-text)';
             const tapeCol = mainColor === 'white' ? 'black' : 'white';
             
-            if(r < 0.25 && w.length > 3) return `<span class="t-tape interact-text" style="background: ${tapeBg}; color: ${tapeCol};" onclick="Engine.spawnParticles(event, '✨')"><span>${w}</span></span>`;
-            return `<span class="${cls} interact-text" style="${style}" onclick="Engine.spawnParticles(event, '✨')">${w}</span>`;
+            if(r < 0.25 && w.length > 3) return `<span class="t-tape interact-text" style="background: ${tapeBg}; color: ${tapeCol};" onclick="Engine.spawnTouchParticles(event, '✨'); event.stopPropagation();"><span>${w}</span></span>`;
+            return `<span class="${cls} interact-text" style="${style}" onclick="Engine.spawnTouchParticles(event, '✨'); event.stopPropagation();">${w}</span>`;
         }).join(' ');
     },
 
-    // 1. CLASSIC LEGACY (EXACT CSS of User's Old App)
+    getRandomFrame: () => {
+        const frames = ['frame-polaroid', 'frame-film', 'frame-glass', 'frame-minimal'];
+        return frames[Math.floor(Math.random() * frames.length)];
+    },
+
+    // 1. CLASSIC LEGACY (Exact Replica + AI Quotes + Frame Variatons)
     classic: () => {
         $('presentation-stage').className = 'tpl-scroll theme-light';
-        let html = `<div id="scroll-container" style="width:100%; height:100%; overflow-y:auto; scroll-snap-type:y mandatory;">`;
+        let html = `<div id="scroll-container" style="width:100%; height:100%; overflow-y:auto; scroll-snap-type:y mandatory; background: var(--legacy-bg);">`;
         let dots = 0;
 
-        // Page 1: Intro
         const q0 = State.quotes[0];
         html += `
             <div class="page" style="background: var(--legacy-light);">
                 <div class="legacy-header zoom-safe" onclick="Engine.zoomInPlace(this)">
-                    <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 3rem); font-weight: 900;">Memory Forge</h1>
+                    <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 2.5rem); font-weight: 900;">Memory Forge</h1>
                     <div style="font-family: 'Dancing Script', cursive; font-size: 1.5rem; color: var(--legacy-accent); margin-top:5px;">Our Timeless Journey</div>
                 </div>
                 
-                <div class="legacy-photo zoom-safe" onclick="Engine.zoomInPlace(this)">
-                    <img src="${State.photos[0].objectUrl}">
+                <div class="zoom-safe" onclick="Engine.zoomInPlace(this)" style="margin: 20px auto;">
+                    <div class="frame-polaroid" style="border-radius: 50%; padding: 10px; width: 60vw; max-width: 250px; height: 60vw; max-height: 250px; overflow:hidden;">
+                        <img src="${State.photos[0].objectUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                    </div>
                 </div>
                 
                 <div class="capcut-typo" style="color: var(--legacy-text); margin-top:20px;">
-                    <div class="interact-text" style="font-size:2.5rem; margin-bottom:10px;" onclick="Engine.spawnParticles(event, '${q0.emoji}')">${q0.emoji}</div>
+                    <div class="interact-text" style="font-size:2.5rem; margin-bottom:10px;" onclick="Engine.spawnTouchParticles(event, '${q0.emoji}')">${q0.emoji}</div>
                     <div style="width:100%;">${Builders.formatTypo(q0.text, 'var(--legacy-primary)', 'var(--legacy-primary)')}</div>
                 </div>
-                <div class="scroll-down-hint"><i class="ph-bold ph-caret-double-down"></i></div>
+                <div class="scroll-down-hint"><i class="ph-bold ph-caret-double-down text-3xl"></i></div>
             </div>
         `;
         dots++;
 
-        // Page 2: Grid
         if (State.photos.length > 1) {
             const limit = Math.min(5, State.photos.length);
-            html += `<div class="page" style="background: #fff5f5;"><div class="capcut-typo interact-text" onclick="Engine.spawnParticles(event, '💖')"><h2 class="t-huge" style="color: var(--legacy-primary);">Sweet Moments</h2></div><div class="memory-box">`;
+            html += `<div class="page" style="background: #fff5f5;"><div class="capcut-typo interact-text" onclick="Engine.spawnTouchParticles(event, '💖')"><h2 class="t-huge" style="color: var(--legacy-primary);">Sweet Moments</h2></div><div class="memory-box">`;
             for(let i=1; i<limit; i++) {
                 const q = State.quotes[i] || State.quotes[0];
                 html += `<div class="memory-item zoom-safe" onclick="Engine.zoomInPlace(this)"><img src="${State.photos[i].objectUrl}"></div>`;
@@ -452,18 +473,17 @@ const Builders = {
             dots++;
         }
 
-        // Page 3+: Timeline
         if (State.photos.length > 5) {
-            html += `<div class="page" style="background: #f5fff9; justify-content: flex-start; padding-top: 80px;"><div class="capcut-typo interact-text" onclick="Engine.spawnParticles(event, '🕰️')"><h2 class="t-huge" style="color: var(--legacy-primary);">The Journey</h2></div><div class="timeline-container"><div class="timeline">`;
+            html += `<div class="page" style="background: #f5fff9; justify-content: flex-start; padding-top: 80px;"><div class="capcut-typo interact-text" onclick="Engine.spawnTouchParticles(event, '🕰️')"><h2 class="t-huge" style="color: var(--legacy-primary);">The Journey</h2></div><div class="timeline-container"><div class="timeline">`;
             for(let i=5; i<State.photos.length; i++) {
                 const q = State.quotes[i];
                 html += `
                     <div class="timeline-item">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content zoom-safe" onclick="Engine.zoomInPlace(this)">
-                            <div style="font-weight:900; color:var(--legacy-primary); margin-bottom:5px; font-size:1.2rem;">Chapter ${i-4}</div>
-                            <div style="font-style:italic; margin-bottom: 10px; color: var(--legacy-text);">${q.text} <span class="interact-text" onclick="Engine.spawnParticles(event, '${q.emoji}'); event.stopPropagation();">${q.emoji}</span></div>
-                            <img src="${State.photos[i].objectUrl}" class="timeline-img">
+                            <div style="font-weight:900; color:var(--legacy-accent); margin-bottom:5px; font-size:0.9rem; text-transform:uppercase; letter-spacing:2px;">Chapter ${i-4}</div>
+                            <div class="capcut-typo" style="margin-bottom: 15px;">${Builders.formatTypo(q.text, 'var(--legacy-primary)', 'var(--legacy-primary)')}</div>
+                            <div class="${Builders.getRandomFrame()}"><img src="${State.photos[i].objectUrl}" class="timeline-img"></div>
                         </div>
                     </div>
                 `;
@@ -483,18 +503,18 @@ const Builders = {
         let html = `<div id="scroll-container" style="width:100%; height:100%; overflow-y:auto; scroll-snap-type:y mandatory;">`;
         State.photos.forEach((p, i) => {
             const q = State.quotes[i];
-            const bgClass = `background: radial-gradient(circle at center, #1a0812, #000);`;
+            const bgClass = `background: linear-gradient(135deg, #1a0812, #000);`;
             
             html += `
                 <div class="page" style="${bgClass}">
                     <div class="capcut-typo" style="margin-bottom:20px;">
-                        <div class="interact-text" style="font-size:3rem; margin-bottom:10px;" onclick="Engine.spawnParticles(event, '${q.emoji}')">${q.emoji}</div>
+                        <div class="interact-text" style="font-size:3rem; margin-bottom:10px;" onclick="Engine.spawnTouchParticles(event, '${q.emoji}')">${q.emoji}</div>
                         <div style="width:100%;">${Builders.formatTypo(q.text, 'white', 'white')}</div>
                     </div>
-                    <div class="zoom-safe" onclick="Engine.zoomInPlace(this)">
-                        <div class="sb-frame"><img src="${p.objectUrl}" class="sb-img"></div>
+                    <div class="zoom-safe" style="transform: rotate(${rand(-5,5)}deg)" onclick="Engine.zoomInPlace(this)">
+                        <div class="${Builders.getRandomFrame()}"><img src="${p.objectUrl}" style="width:70vw; max-width:320px; height:45dvh; object-fit:cover;"></div>
                     </div>
-                    ${i===0 ? '<div class="scroll-down-hint"><i class="ph-bold ph-caret-double-down"></i></div>' : ''}
+                    ${i===0 ? '<div class="scroll-down-hint"><i class="ph-bold ph-caret-double-down text-3xl"></i></div>' : ''}
                 </div>
             `;
         });
@@ -503,7 +523,7 @@ const Builders = {
         return html;
     },
 
-    // 3. INFINITE WALL
+    // 3. INFINITE WALL (Native Swipe Drag)
     wall: () => {
         $('presentation-stage').className = 'tpl-wall theme-dark';
         let html = `<div class="wall-matrix" id="wall-matrix">`;
@@ -511,21 +531,15 @@ const Builders = {
         State.photos.forEach((p, i) => {
             const q = State.quotes[i];
             html += `
-                <div class="zoom-safe" style="position:absolute; top:${cy}vh; left:${cx}vw; transform: translate(-50%,-50%) rotate(${rand(-10,10)}deg);" onclick="Engine.zoomInPlace(this)">
-                    <div class="wall-polaroid"><img src="${p.objectUrl}">
-                    <div style="text-align:center; font-weight:bold; color:black; margin-top:10px; font-size:12px;" class="interact-text" onclick="Engine.spawnParticles(event, '${q.emoji}'); event.stopPropagation();">${q.text} ${q.emoji}</div></div>
+                <div class="zoom-safe wall-item" style="position:absolute; top:${cy}vh; left:${cx}vw; transform: translate(-50%,-50%) rotate(${rand(-10,10)}deg);" onclick="Engine.zoomInPlace(this)">
+                    <div class="${Builders.getRandomFrame()}"><img src="${p.objectUrl}">
+                    <div style="text-align:center; font-weight:bold; color:var(--legacy-primary); margin-top:10px; font-size:12px;" class="interact-text" onclick="Engine.spawnTouchParticles(event, '${q.emoji}'); event.stopPropagation();">${q.text} ${q.emoji}</div></div>
                 </div>
             `;
             const dir = Math.floor(Math.random() * 4);
             if(dir===0) cy-=60; else if(dir===1) cx+=60; else if(dir===2) cy+=60; else cx-=60;
         });
-        html += `</div>
-            <div class="dpad">
-                <div class="dpad-btn" style="grid-column:2; grid-row:1;" onclick="Engine.panWall('up')"><i class="ph-bold ph-caret-up text-xl"></i></div>
-                <div class="dpad-btn" style="grid-column:1; grid-row:2;" onclick="Engine.panWall('left')"><i class="ph-bold ph-caret-left text-xl"></i></div>
-                <div class="dpad-btn" style="grid-column:2; grid-row:2;" onclick="Engine.panWall('down')"><i class="ph-bold ph-caret-down text-xl"></i></div>
-                <div class="dpad-btn" style="grid-column:3; grid-row:2;" onclick="Engine.panWall('right')"><i class="ph-bold ph-caret-right text-xl"></i></div>
-            </div>`;
+        html += `</div>`;
         $('pageIndicator').innerHTML = ''; 
         return html;
     },
@@ -539,7 +553,7 @@ const Builders = {
             html += `
                 <div class="grid-item zoom-safe" onclick="Engine.zoomInPlace(this)">
                     <img src="${p.objectUrl}">
-                    <div class="grid-text interact-text" onclick="Engine.spawnParticles(event, '${q.emoji}'); event.stopPropagation();">${q.text} <br> ${q.emoji}</div>
+                    <div class="grid-text interact-text" onclick="Engine.spawnTouchParticles(event, '${q.emoji}'); event.stopPropagation();">${q.text} <br> ${q.emoji}</div>
                 </div>
             `;
         });
@@ -548,11 +562,58 @@ const Builders = {
     }
 };
 
+// --- NATIVE SWIPE PAN FOR INFINITE WALL ---
+const WallDragController = {
+    isDragging: false, startX: 0, startY: 0,
+    init: () => {
+        const stage = $('presentation-stage');
+        const matrix = $('wall-matrix');
+        if(!matrix || State.template !== 'wall') return;
+
+        stage.addEventListener('pointerdown', e => {
+            if($('interactive-particles').classList.contains('active')) return; // Dont pan if zoomed
+            WallDragController.isDragging = true;
+            WallDragController.startX = e.clientX; WallDragController.startY = e.clientY;
+            matrix.classList.remove('smooth-pan');
+        });
+
+        stage.addEventListener('pointermove', e => {
+            if(!WallDragController.isDragging) return;
+            const dx = e.clientX - WallDragController.startX;
+            const dy = e.clientY - WallDragController.startY;
+            
+            // Move temporarily
+            const vdx = (dx / window.innerWidth) * 100;
+            const vdy = (dy / window.innerHeight) * 100;
+            matrix.style.transform = `translate3d(calc(50vw - ${State.camX - vdx}vw), calc(50dvh - ${State.camY - vdy}vh), 0)`;
+        });
+
+        const endDrag = (e) => {
+            if(!WallDragController.isDragging) return;
+            WallDragController.isDragging = false;
+            matrix.classList.add('smooth-pan');
+            
+            const dx = e.clientX - WallDragController.startX;
+            const dy = e.clientY - WallDragController.startY;
+            
+            // If moved significantly, update cam position, otherwise it's a click
+            if(Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                State.camX -= (dx / window.innerWidth) * 100;
+                State.camY -= (dy / window.innerHeight) * 100;
+            }
+            Engine.updateWallCam();
+        };
+
+        stage.addEventListener('pointerup', endDrag);
+        stage.addEventListener('pointercancel', endDrag);
+    }
+};
+
 const ObserverConfig = {
     init: () => {
         if(State.observer) State.observer.disconnect();
         const container = $('scroll-container');
-        if(!container) return; // Only init if scroll template
+        if(!container) return; 
         
         State.observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -574,11 +635,11 @@ const Engine = {
         if(State.photos.length === 0) return UI.showModal("Foto Kosong", "Pilih minimal 1 foto dari galeri HP Anda.");
         UI.setLoading(true);
         
-        // AUDIO UNLOCK HACK: Play and pause immediately on user gesture to unlock Web Audio API
+        // AUDIO UNLOCK HACK
         if(State.audioUrl && !State.audioInstance) {
             State.audioInstance = new Audio(State.audioUrl);
             State.audioInstance.loop = true;
-            State.audioInstance.play().then(() => { State.audioInstance.pause(); }).catch(e=>console.warn("Audio unlock pending..."));
+            State.audioInstance.play().then(() => { State.audioInstance.pause(); }).catch(e=>{});
         }
 
         try {
@@ -592,18 +653,17 @@ const Engine = {
             setTimeout(() => $('envelopeScreen').style.opacity = '1', 50);
             
         } catch(err) {
-            UI.showModal("Kesalahan Sistem", err.message);
+            UI.showModal("Kesalahan", err.message);
         } finally {
             UI.setLoading(false);
         }
     },
 
     openEnvelope: () => {
-        // SECOND AUDIO TRIGGER: Actual play
-        if(State.audioInstance) { State.audioInstance.play().catch(e=>console.warn("Audio autoplay blocked by browser.")); }
+        if(State.audioInstance) { State.audioInstance.play().catch(e=>{}); }
 
         $('envelope').classList.add('open');
-        Engine.spawnParticles({clientX: window.innerWidth/2, clientY: window.innerHeight/2}, '❤️', 15);
+        Engine.spawnTouchParticles({clientX: window.innerWidth/2, clientY: window.innerHeight/2}, '❤️', 15);
 
         setTimeout(() => {
             $('envelopeScreen').style.opacity = '0';
@@ -613,7 +673,9 @@ const Engine = {
                 $('btn-home').style.display = 'flex';
                 
                 if(State.template === 'wall') {
-                    State.camX = 50; State.camY = 50; Engine.updateWallCam();
+                    State.camX = 50; State.camY = 50; 
+                    Engine.updateWallCam();
+                    WallDragController.init();
                 } else {
                     ObserverConfig.init(); 
                 }
@@ -623,29 +685,45 @@ const Engine = {
 
     goHome: () => {
         if(State.audioInstance) { State.audioInstance.pause(); State.audioInstance=null; }
-        safeIterate('.is-zoomed', z => z.classList.remove('is-zoomed'));
+        
+        if(State.zoomedFrame) Engine.closeZoom();
 
         $('presentation-stage').style.display = 'none'; $('btn-home').style.display = 'none';
         $('envelopeScreen').style.display = 'none'; $('envelope').classList.remove('open');
         $('setupScreen').style.display = 'flex';
     },
 
-    // --- ZERO-BUG IN-PLACE ZOOM & PARTICLES ---
+    // --- ZERO-BUG IN-PLACE ZOOM & INTERACTIVE PARTICLES (tsParticles) ---
     zoomInPlace: (el) => {
-        if(el.classList.contains('is-zoomed')) {
-            el.classList.remove('is-zoomed');
-        } else {
-            safeIterate('.is-zoomed', z => z.classList.remove('is-zoomed'));
-            el.classList.add('is-zoomed');
+        // Prevent click if we were dragging the wall
+        if(State.template === 'wall' && WallDragController.isDragging) return;
 
-            const rect = el.getBoundingClientRect();
-            const cx = rect.left + rect.width/2; 
-            const cy = rect.top + rect.height/2;
-            Engine.spawnParticles({clientX: cx, clientY: cy}, '✨', 5);
+        if(el.classList.contains('is-zoomed')) {
+            Engine.closeZoom();
+        } else {
+            // Unzoom others safely
+            if(State.zoomedFrame) Engine.closeZoom();
+            
+            el.classList.add('is-zoomed');
+            $('zoom-dimmer').classList.add('active');
+            State.zoomedFrame = el;
+
+            // Activate Interactive Particles layer
+            Engine.startInteractiveParticles();
         }
     },
 
-    spawnParticles: (e, emojiStr, count = 3) => {
+    closeZoom: () => {
+        if(State.zoomedFrame) {
+            State.zoomedFrame.classList.remove('is-zoomed');
+            State.zoomedFrame = null;
+        }
+        $('zoom-dimmer').classList.remove('active');
+        // Deactivate Interactive Particles
+        $('interactive-particles').classList.remove('active');
+    },
+
+    spawnTouchParticles: (e, emojiStr, count = 3) => {
         for(let i=0; i<count; i++) {
             const p = document.createElement('div');
             p.className = 'touch-particle'; 
@@ -660,18 +738,36 @@ const Engine = {
         }
     },
 
-    // For Wall Template
+    // tsParticles integration for the zoomed state
+    startInteractiveParticles: () => {
+        const pContainer = $('interactive-particles');
+        pContainer.classList.add('active');
+        
+        tsParticles.load("interactive-particles", {
+            fullScreen: { enable: false },
+            particles: {
+                number: { value: 40 },
+                shape: { type: "char", character: { value: ["❤️", "✨", "💫"], font: "Verdana" } },
+                size: { value: 15 },
+                move: { enable: true, speed: 2, direction: "none", outModes: "bounce" },
+                opacity: { value: 0.8 }
+            },
+            interactivity: {
+                detectsOn: "window",
+                events: {
+                    onHover: { enable: true, mode: "repulse" },
+                    onClick: { enable: false } // Click handled by closeZoom
+                },
+                modes: {
+                    repulse: { distance: 150, duration: 0.4 }
+                }
+            }
+        });
+    },
+
     updateWallCam: () => {
         const matrix = $('wall-matrix');
         if(matrix) matrix.style.transform = `translate3d(calc(50vw - ${State.camX}vw), calc(50dvh - ${State.camY}vh), 0)`;
-    },
-    panWall: (dir) => {
-        const step = 60;
-        if(dir === 'up') State.camY -= step;
-        if(dir === 'down') State.camY += step;
-        if(dir === 'left') State.camX -= step;
-        if(dir === 'right') State.camX += step;
-        Engine.updateWallCam();
     }
 };
 
