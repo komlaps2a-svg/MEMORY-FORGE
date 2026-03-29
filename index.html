@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Memory Forge - V48 Absolute Fluidity</title>
+    <title>Memory Forge - V49 True Fluidity</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
@@ -15,6 +15,7 @@
         :root {
             --legacy-bg: #f5f0e6; --legacy-primary: #7a5c40; --legacy-secondary: #a3876a; 
             --legacy-text: #2c241b; --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.25, 1, 0.5, 1);
             --frame-bg: #fffdf8; --frame-border: #e8dfd5;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -62,40 +63,85 @@
         .env-back { position: absolute; width: 100%; height: 100%; background: #111; border-radius: 8px; z-index: 0; backface-visibility: hidden; }
 
         /* =========================================
-           PRESENTATION STAGE & INLINE ZOOM DYNAMICS
+           PRESENTATION STAGE (FIXED OVERFLOW SPECIFICITY)
            ========================================= */
         #presentation-stage { display: none; position: fixed; inset: 0; z-index: 10; background: #050505; overflow: hidden; }
+        
         .tpl-scroll { height: 100dvh; width: 100vw; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .page { min-height: 100dvh; width: 100vw; scroll-snap-align: start; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
         
-        /* INLINE ZOOM ENGINE (The Game Changer)
-           Elemen tidak keluar dari struktur DOM, membesar di tempatnya,
-           sehingga latar belakang tetap bisa di-scroll dan digeser.
-        */
-        .interact-el { cursor: pointer; position: relative; z-index: 10; transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s ease, z-index 0s; display: flex; flex-direction: column; }
-        .interact-el:active { filter: brightness(0.9); }
-        .interact-el.expanded { box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
+        .tpl-grid { height: 100dvh; width: 100vw; overflow-y: auto; padding: 80px 15px 20px 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; align-content: start; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         
+        .tpl-wall { position: absolute; inset: 0; background: radial-gradient(circle at center, #181512 0%, #050505 100%); overflow: hidden; touch-action: none; cursor: grab; }
+        .tpl-wall:active { cursor: grabbing; }
+        .wall-matrix { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; transform-style: preserve-3d; will-change: transform; transition: transform 0.1s ease-out; }
+
+        /* =========================================
+           TRUE ASPECT RATIO INLINE EXPANSION
+           ========================================= */
+        .interact-el { cursor: pointer; position: relative; z-index: 10; display: flex; flex-direction: column; transition: width 0.4s var(--ease-smooth), height 0.4s var(--ease-smooth), transform 0.4s var(--ease-smooth), box-shadow 0.4s ease; transform-origin: center; }
+        
+        /* Thumbnail State Image */
+        .interact-el img { transition: all 0.4s var(--ease-smooth); }
+
+        /* --- THE EXPANDED LOGIC --- */
+        .interact-el.expanded {
+            z-index: 1000 !important;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            cursor: zoom-out;
+        }
+
+        /* 1. Un-crop the image to its natural aspect ratio perfectly */
+        .interact-el.expanded img {
+            height: auto !important;
+            max-height: 65vh !important;
+            object-fit: contain !important; /* Mencegah pemotongan gambar lanskap/potret */
+            background: transparent;
+        }
+
+        /* 2. Scroll Templates (Classic & Storybook) */
+        .tpl-scroll .interact-el.expanded {
+            width: 95vw !important;
+            max-width: 550px !important;
+            margin: 0 auto !important;
+        }
+
+        /* 3. Wall Template */
+        .tpl-wall .interact-el.expanded {
+            width: 90vw !important;
+            max-width: 450px !important;
+            /* Meratakan kemiringan rotasi saat dizoom agar elegan dibaca */
+            transform: translate(-50%, -50%) rotate(0deg) !important; 
+        }
+
+        /* 4. Grid Template (The Accordion Push) */
+        .tpl-grid .interact-el.expanded {
+            grid-column: 1 / -1 !important; /* Mendorong foto lain agar foto ini muat 1 layar penuh */
+            width: 100% !important;
+            max-width: 600px !important;
+            margin: 0 auto;
+        }
+
         /* Z-Metadata (Puisi & Judul) tersembunyi hingga di-klik */
-        .z-metadata { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease, opacity 0.5s ease, margin 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .interact-el.expanded .z-metadata { max-height: 250px; opacity: 1; margin-top: 15px; }
+        .z-metadata { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.5s ease, margin 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .interact-el.expanded .z-metadata { max-height: 300px; opacity: 1; margin-top: 15px; }
 
         .z-title { color: #3e3224; font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 900; letter-spacing: 0.5px; text-align: center; margin-bottom: 6px; }
         .z-poetry { color: #7a6652; font-family: 'Montserrat', sans-serif; font-style: italic; font-size: 11px; text-align: center; line-height: 1.6; font-weight: 500; }
+        
+        .theme-dark .z-title { color: #f5f0e6; }
+        .theme-dark .z-poetry { color: #a3876a; }
 
         /* Elegant High-End Frames */
         .f-polaroid { background: var(--frame-bg); padding: 12px 12px 20px 12px; border-radius: 6px; border: 1px solid var(--frame-border); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
         .f-glass { background: rgba(255, 253, 248, 0.9); backdrop-filter: blur(15px); padding: 12px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.8); }
         .f-classic { border: 8px solid var(--frame-bg); background: var(--frame-bg); padding-bottom: 12px; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        
+        .theme-dark .f-polaroid { background: #1a1a1a; border-color: #333; }
+        .theme-dark .f-glass { background: rgba(20,20,20,0.8); border-color: rgba(255,255,255,0.1); }
+        .theme-dark .f-classic { border-color: #1a1a1a; background: #1a1a1a; }
 
         .memory-box { display: flex; flex-direction: column; gap: 40px; width: 100%; max-width: 500px; padding: 20px 0; }
-        
-        .tpl-wall { position: absolute; inset: 0; background: radial-gradient(circle at center, #181512 0%, #050505 100%); overflow: hidden; touch-action: none; cursor: grab; }
-        .tpl-wall:active { cursor: grabbing; }
-        .wall-matrix { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; transform-style: preserve-3d; will-change: transform; transition: transform 0.1s ease-out; }
-        
-        .tpl-grid { height: 100dvh; width: 100vw; overflow-y: auto; padding: 80px 15px 20px 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; align-content: start; background: #0a0a0a; }
-
         .t-huge { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900; line-height: 1.1; letter-spacing: -1px; }
 
         .btn-top-home { position: fixed; top: 20px; left: 20px; z-index: 500; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; display: none; justify-content: center; align-items: center; color: white; cursor: pointer; transition: 0.2s;}
@@ -111,7 +157,7 @@
 <div id="setupScreen">
     <div class="setup-card relative text-left">
         <h1 class="text-3xl font-black mb-1 font-['Cinzel'] tracking-tighter text-center drop-shadow-md">Memory Forge</h1>
-        <p class="text-[10px] text-[#a3876a] font-black uppercase tracking-widest mb-6 text-center">Absolute Fluidity V48</p>
+        <p class="text-[10px] text-[#a3876a] font-black uppercase tracking-widest mb-6 text-center">True Fluidity V49</p>
 
         <div class="custom-dropdown mb-4" id="tpl-dropdown">
             <label class="block text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 ml-1">Arsitektur Visual</label>
@@ -292,7 +338,6 @@ const AI = {
 const Builders = {
     getFrame: (idx) => { const frames = ['f-polaroid', 'f-glass', 'f-classic']; return frames[idx % frames.length]; },
     
-    // Injeksi Z-Metadata (Elemen Elegan/Bright/Mahal) langsung ke dalam elemen.
     buildMetadata: (i) => `
         <div class="z-metadata">
             <div class="z-title">${State.quotes[i].text}</div>
@@ -301,8 +346,7 @@ const Builders = {
     `,
 
     classic: () => {
-        $('presentation-stage').className = 'tpl-scroll theme-light';
-        let html = `<div style="width:100%; height:100%; overflow-y:auto; scroll-snap-type:y mandatory; background: var(--legacy-bg);">`;
+        let html = `<div class="tpl-scroll theme-light">`;
         html += `
             <div class="page" style="background: var(--legacy-bg); position:relative;">
                 <div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div>
@@ -310,8 +354,8 @@ const Builders = {
                     <h1 class="t-huge" style="color:var(--legacy-primary);">Memory Forge</h1>
                     <div style="font-family:'Dancing Script',cursive; font-size:1.8rem; color:var(--legacy-secondary); margin-top:5px;">Our Timeless Journey</div>
                 </div>
-                <div class="interact-el ${Builders.getFrame(0)}" style="margin-top:30px; z-index:2;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
-                    <img src="${State.photos[0].objectUrl}" style="width:65vw; max-width:280px; height:65vw; max-height:280px; object-fit:cover; border-radius: 4px;">
+                <div class="interact-el ${Builders.getFrame(0)}" style="margin-top:30px; z-index:2; width: 65vw; max-width: 280px;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
+                    <img src="${State.photos[0].objectUrl}" style="width:100%; height:250px; object-fit:cover; border-radius: 4px;">
                     ${Builders.buildMetadata(0)}
                 </div>
             </div>`;
@@ -321,7 +365,7 @@ const Builders = {
                         <div class="memory-box" style="z-index:2;">`;
             for(let i=1; i<State.photos.length; i++) {
                 html += `
-                    <div class="interact-el ${Builders.getFrame(i)}" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
+                    <div class="interact-el ${Builders.getFrame(i)}" style="width: 100%;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
                         <img src="${State.photos[i].objectUrl}" style="width:100%; height:250px; object-fit:cover; border-radius: 4px;">
                         ${Builders.buildMetadata(i)}
                     </div>`;
@@ -332,8 +376,7 @@ const Builders = {
     },
     
     storybook: () => {
-        $('presentation-stage').className = 'tpl-scroll theme-dark';
-        let html = `<div style="width:100%; height:100%; overflow-y:auto; scroll-snap-type:y mandatory;">`;
+        let html = `<div class="tpl-scroll theme-dark">`;
         State.photos.forEach((p, i) => {
             const bg = i % 2 === 0 ? `linear-gradient(135deg, #181512, #050505)` : `linear-gradient(135deg, #1f1b18, #000)`;
             const particles = i === 0 ? `<div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div>` : '';
@@ -341,8 +384,8 @@ const Builders = {
                 <div class="page" style="background: ${bg}; position:relative;">
                     ${particles}
                     <h2 class="t-huge" style="color:#f5f0e6; margin-bottom:20px; z-index:2; text-transform:uppercase; font-size:clamp(1.5rem, 6vw, 2.5rem); letter-spacing:2px; font-weight: 500;">${State.quotes[i].text}</h2>
-                    <div class="interact-el ${Builders.getFrame(i+1)}" style="transform: rotate(${rand(-2,2)}deg); z-index:2;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
-                        <img src="${p.objectUrl}" style="width:70vw; max-width:320px; height:45dvh; object-fit:cover; border-radius: 4px;">
+                    <div class="interact-el ${Builders.getFrame(i+1)}" style="transform: rotate(${rand(-2,2)}deg); z-index:2; width: 70vw; max-width: 320px;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
+                        <img src="${p.objectUrl}" style="width:100%; height:45dvh; object-fit:cover; border-radius: 4px;">
                         ${Builders.buildMetadata(i)}
                     </div>
                 </div>`;
@@ -351,24 +394,24 @@ const Builders = {
     },
 
     wall: () => {
-        $('presentation-stage').className = 'tpl-wall theme-dark';
-        let html = `<div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div><div class="wall-matrix" id="wall-matrix" style="z-index:2;">`;
+        let html = `<div class="tpl-wall theme-dark"><div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div><div class="wall-matrix" id="wall-matrix" style="z-index:2;">`;
         State.photos.forEach((p, i) => {
             const angle = i * 2.39996; 
             const radius = 180 + (i * 90); 
             const cx = Math.cos(angle) * radius;
             const cy = Math.sin(angle) * radius;
-            html += `<div class="wall-item interact-el ${Builders.getFrame(i)}" style="position:absolute; top:calc(50dvh + ${cy}px); left:calc(50vw + ${cx}px); transform: translate(-50%,-50%) rotate(${rand(-6,6)}deg);" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
-                        <img src="${p.objectUrl}" style="width:200px; height:220px; object-fit:cover; border-radius: 4px;">
+            html += `<div class="wall-item interact-el ${Builders.getFrame(i)}" style="position:absolute; top:calc(50dvh + ${cy}px); left:calc(50vw + ${cx}px); transform: translate(-50%,-50%) rotate(${rand(-6,6)}deg); width: 220px;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
+                        <img src="${p.objectUrl}" style="width:100%; height:220px; object-fit:cover; border-radius: 4px;">
                         ${Builders.buildMetadata(i)}
                      </div>`;
         });
-        html += `</div>`; return html;
+        html += `</div></div>`; return html;
     },
 
     grid: () => {
-        $('presentation-stage').className = 'tpl-grid theme-dark';
-        let html = `<div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div>`;
+        // PERBAIKAN BUG GRID: Kontainer scroll dibungkus di dalam struktur HTML,
+        // menghindari tabrakan dengan `#presentation-stage { overflow: hidden }`.
+        let html = `<div class="tpl-grid theme-dark"><div id="hero-particles" style="position:absolute; inset:0; z-index:1; pointer-events:none;"></div>`;
         State.photos.forEach((p, i) => {
             const span = Math.random() > 0.6 ? (Math.random() > 0.5 ? 'grid-row: span 2;' : 'grid-column: span 2;') : '';
             html += `<div class="interact-el ${Builders.getFrame(i+2)}" style="${span} z-index:2;" onclick="if(!State.isDragMoved) Engine.toggleInlineZoom(this)">
@@ -376,7 +419,7 @@ const Builders = {
                         ${Builders.buildMetadata(i)}
                      </div>`;
         });
-        return html;
+        html += `</div>`; return html;
     }
 };
 
@@ -384,21 +427,22 @@ const WallDragController = {
     isDragging: false, startX: 0, startY: 0, ticking: false,
     init: () => {
         const matrix = $('wall-matrix');
-        if(!matrix && State.template !== 'wall') return;
+        // PERBAIKAN BUG: Validasi aman mencegah block-scroll pada template Grid
+        if(State.template !== 'wall' || !matrix) return;
+        
         State.camX = 0; State.camY = 0;
-        if(matrix) matrix.style.transform = `translate3d(0px, 0px, 0)`;
+        matrix.style.transform = `translate3d(0px, 0px, 0)`;
 
         $('presentation-stage').addEventListener('pointerdown', e => {
             WallDragController.isDragging = true;
             WallDragController.startX = e.clientX - State.camX;
             WallDragController.startY = e.clientY - State.camY;
-            State.isDragMoved = false; // Reset drag collision detector
-            if(matrix) matrix.style.transition = 'none';
+            State.isDragMoved = false;
+            matrix.style.transition = 'none';
         });
         window.addEventListener('pointermove', e => {
             if(!WallDragController.isDragging) return;
             
-            // Evaluasi Drag vs Click
             if(Math.abs(e.clientX - State.camX - WallDragController.startX) > 5 || 
                Math.abs(e.clientY - State.camY - WallDragController.startY) > 5) {
                 State.isDragMoved = true;
@@ -408,7 +452,7 @@ const WallDragController = {
                 window.requestAnimationFrame(() => {
                     State.camX = e.clientX - WallDragController.startX;
                     State.camY = e.clientY - WallDragController.startY;
-                    if(matrix) matrix.style.transform = `translate3d(${State.camX}px, ${State.camY}px, 0)`;
+                    matrix.style.transform = `translate3d(${State.camX}px, ${State.camY}px, 0)`;
                     WallDragController.ticking = false;
                 });
                 WallDragController.ticking = true;
@@ -417,8 +461,8 @@ const WallDragController = {
         
         const endDrag = () => {
             WallDragController.isDragging = false;
-            if(matrix) matrix.style.transition = 'transform 0.1s ease-out';
-            setTimeout(() => State.isDragMoved = false, 50); // Clear state safely after click event fires
+            matrix.style.transition = 'transform 0.1s ease-out';
+            setTimeout(() => State.isDragMoved = false, 50); 
         };
         window.addEventListener('pointerup', endDrag);
         window.addEventListener('pointercancel', endDrag);
@@ -450,7 +494,7 @@ const Engine = {
                 $('presentation-stage').style.display = 'block';
                 $('btn-home').style.display = 'flex';
                 
-                WallDragController.init(); // Selalu init pendeteksi click vs drag untuk semua template
+                WallDragController.init(); 
 
                 if($('hero-particles')) {
                     tsParticles.load("hero-particles", {
@@ -474,37 +518,19 @@ const Engine = {
         }, 1500);
     },
 
-    // INLINE EXPANSION ENGINE
+    // INLINE EXPANSION ENGINE - REFACTORED (NO SCALE DISTORTION)
     toggleInlineZoom: (el) => {
         const isExpanded = el.classList.contains('expanded');
 
-        // Tutup yang lama jika ada (Sistem Akordion Tunggal)
         if(State.lastZoomed && State.lastZoomed !== el) {
             State.lastZoomed.classList.remove('expanded');
-            State.lastZoomed.style.transform = State.lastZoomed.dataset.baseTransform || '';
-            State.lastZoomed.style.zIndex = State.lastZoomed.dataset.baseZIndex || 10;
         }
 
         if(!isExpanded) {
-            // Simpan state awal untuk direstorasi nanti
-            if(!el.dataset.baseTransform) {
-                el.dataset.baseTransform = el.style.transform || '';
-                el.dataset.baseZIndex = el.style.zIndex || 10;
-            }
-            
             el.classList.add('expanded');
-            el.style.zIndex = 1000; // Pastikan paling atas
-            
-            // Kalkulasi skala sesuai layout agar optimal di HP
-            let scaleVal = State.template === 'wall' ? 1.7 : (State.template === 'grid' ? 1.4 : 1.15);
-            el.style.transform = `${el.dataset.baseTransform} scale(${scaleVal})`;
-            
             State.lastZoomed = el;
         } else {
-            // Kembalikan ke normal
             el.classList.remove('expanded');
-            el.style.transform = el.dataset.baseTransform || '';
-            el.style.zIndex = el.dataset.baseZIndex || 10;
             State.lastZoomed = null;
         }
     },
